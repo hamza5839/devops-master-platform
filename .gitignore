@@ -1,0 +1,15 @@
+# Python virtual environments & cache
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+
+# Environment variables & secrets
+.env
+*.pem
+*.key
+
+# OS & Editor files
+.DS_Store
+.vscode/
+*.log

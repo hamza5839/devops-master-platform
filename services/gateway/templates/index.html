@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevOps Master Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="max-w-2xl w-full bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-8 space-y-6">
+        
+        <!-- Header -->
+        <div class="flex justify-between items-center border-b border-slate-700 pb-4">
+            <h1 class="text-2xl font-bold tracking-wider text-emerald-400">🚀 DevOps Platform</h1>
+            <span class="px-3 py-1 bg-slate-700 text-emerald-300 text-xs font-semibold rounded-full uppercase tracking-widest">{{ env }}</span>
+        </div>
+
+        <!-- Pod Grid -->
+        <div class="grid grid-cols-2 gap-4 text-center">
+            <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50">
+                <p class="text-xs text-slate-400 uppercase tracking-wider mb-1">Gateway Pod</p>
+                <p id="gw-pod" class="text-sm font-mono text-cyan-400 truncate">Loading...</p>
+            </div>
+            <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50">
+                <p class="text-xs text-slate-400 uppercase tracking-wider mb-1">Counter Pod</p>
+                <p id="cnt-pod" class="text-sm font-mono text-amber-400 truncate">Loading...</p>
+            </div>
+        </div>
+
+        <!-- Counter Box -->
+        <div class="bg-slate-900 p-6 rounded-xl border border-slate-700 text-center space-y-2">
+            <p class="text-sm text-slate-400 uppercase tracking-widest">Total Global Visits (Redis)</p>
+            <h2 id="hit-count" class="text-6xl font-black text-emerald-400 tracking-tight">--</h2>
+        </div>
+
+        <!-- NEW: Telemetry & Health Panel -->
+        <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-700 space-y-3">
+            <div class="flex justify-between items-center">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">System Probes & Telemetry</h3>
+                <div class="space-x-2">
+                    <span id="health-badge" class="px-2 py-0.5 text-[10px] font-semibold rounded bg-slate-700 text-slate-300">Health: Checking...</span>
+                    <span id="ready-badge" class="px-2 py-0.5 text-[10px] font-semibold rounded bg-slate-700 text-slate-300">Ready: Checking...</span>
+                </div>
+            </div>
+            
+            <!-- Live JSON Audit Log Box -->
+            <div>
+                <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Latest Backend Structured JSON Audit Log</p>
+                <pre id="audit-log-box" class="bg-slate-950 text-emerald-400 font-mono text-xs p-3 rounded-lg overflow-x-auto border border-slate-800 h-16 flex items-center">Waiting for log event...</pre>
+            </div>
+
+            <!-- Quick Links to Metrics -->
+            <div class="flex justify-between items-center pt-1 text-xs">
+                <a href="/metrics" target="_blank" class="text-cyan-400 hover:underline flex items-center gap-1">📊 View Prometheus Metrics ↗</a>
+                <span class="text-slate-500">Auto-polls every 3s</span>
+            </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex gap-3 pt-2">
+            <button onclick="fetchData()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 px-4 rounded-xl transition shadow-lg shadow-emerald-900/30">
+                Refresh Stats
+            </button>
+            <button onclick="triggerStress()" class="bg-rose-600/80 hover:bg-rose-500 text-white font-semibold py-3 px-4 rounded-xl transition text-sm">
+                Trigger CPU Stress
+            </button>
+        </div>
+    </div>
+
+    <script>
+        async function fetchData() {
+            try {
+                // Fetch main API counter stats
+                let response = await fetch('/api');
+                let data = await response.json();
+                document.getElementById('hit-count').innerText = data.upstream.hits;
+                document.getElementById('gw-pod').innerText = data.gateway_pod;
+                document.getElementById('cnt-pod').innerText = data.upstream.pod;
+
+                // Simulate/Fetch latest audit JSON entry based on current response data
+                let logEntry = {
+                    ts: Date.now() / 1000,
+                    service: "gateway",
+                    env: data.env,
+                    gw_pod: data.gateway_pod,
+                    upstream_hits: data.upstream.hits
+                };
+                document.getElementById('audit-log-box').innerText = JSON.stringify(logEntry, null, 2);
+
+                // Fetch Health Probe (/healthz)
+                let healthRes = await fetch('/healthz');
+                let healthBadge = document.getElementById('health-badge');
+                if (healthRes.ok) {
+                    healthBadge.className = "px-2 py-0.5 text-[10px] font-semibold rounded bg-emerald-900/80 text-emerald-300 border border-emerald-700";
+                    healthBadge.innerText = "Health: Alive (200 OK)";
+                } else {
+                    healthBadge.className = "px-2 py-0.5 text-[10px] font-semibold rounded bg-rose-900/80 text-rose-300 border border-rose-700";
+                    healthBadge.innerText = "Health: Failing";
+                }
+
+                // Fetch Readiness Probe (/readyz)
+                let readyRes = await fetch('/readyz');
+                let readyBadge = document.getElementById('ready-badge');
+                if (readyRes.ok) {
+                    readyBadge.className = "px-2 py-0.5 text-[10px] font-semibold rounded bg-emerald-900/80 text-emerald-300 border border-emerald-700";
+                    readyBadge.innerText = "Ready: Upstream OK";
+                } else {
+                    readyBadge.className = "px-2 py-0.5 text-[10px] font-semibold rounded bg-rose-900/80 text-rose-300 border border-rose-700";
+                    readyBadge.innerText = "Ready: Not Ready (503)";
+                }
+
+            } catch (err) {
+                console.error("Error fetching telemetry:", err);
+            }
+        }
+
+        async function triggerStress() {
+            let btn = event.target;
+            btn.innerText = "Stressing CPU...";
+            await fetch('/stress');
+            btn.innerText = "Trigger CPU Stress";
+            fetchData();
+        }
+
+        fetchData();
+        setInterval(fetchData, 3000);
+    </script>
+</body>
+</html>

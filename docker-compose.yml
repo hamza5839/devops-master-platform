@@ -1,0 +1,60 @@
+version: '3.8'
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+    driver: local
+
+services:
+  # Tier 3: Stateful Redis Database
+  redis:
+    image: redis:7.2-alpine
+    container_name: redis-db
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "DevOpsSecretPass123!"]
+    volumes:
+      - redis-data:/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "DevOpsSecretPass123!", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Tier 2: Internal Counter Microservice
+  counter-service:
+    build:
+      context: ./services/counter
+      dockerfile: Dockerfile
+    container_name: counter-app
+    restart: unless-stopped
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=DevOpsSecretPass123!
+      - LOG_PATH=/tmp/audit.log
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  # Tier 1: Public Gateway Service
+  gateway-service:
+    build:
+      context: ./services/gateway
+      dockerfile: Dockerfile
+    container_name: gateway-app
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - COUNTER_URL=http://counter-service:5001/count
+      - APP_ENV=local-docker-compose
+    depends_on:
+      - counter-service
+    networks:
+      - app-network

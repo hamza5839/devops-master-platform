@@ -23,23 +23,65 @@ An enterprise-grade, observable, and security-hardened 3-tier microservices plat
 ┌─────────────────────────┐
 │      redis-db (7.2)     │  (Stateful Persistence via Docker Volume: redis-data)
 └─────────────────────────┘
-Core Engineering Highlights
-Multi-Stage Container Optimization: Separated build-time compilers (builder) from lightweight runtime environments (runner) on python:3.11-slim, achieving a 97% image efficiency score verified via dive.
+```
 
-OverlayFS Layer Deduplication: Implemented COPY --chown=10001:10001 during stage transfers to avoid Copy-on-Write (CoW) metadata duplication across layers.
+### Core Engineering Highlights
+* **Multi-Stage Container Optimization:** Separated build-time compilers (`builder`) from lightweight runtime environments (`runner`) on `python:3.11-slim`, achieving a **97% image efficiency score** verified via `dive`.
+* **OverlayFS Layer Deduplication:** Implemented `COPY --chown=10001:10001` during stage transfers to avoid Copy-on-Write (CoW) metadata duplication across layers.
+* **Principle of Least Privilege:** Stripped root access across all application containers, executing Gunicorn workers strictly under unprivileged UID/GID `10001:10001`.
+* **PID 1 Signal Handling:** Configured Exec-form entrypoints (`CMD ["gunicorn", ...]`) to ensure `gunicorn` runs as PID 1 and handles `SIGTERM` for graceful shutdowns.
+* **Race-Condition Free Orchestration:** Enforced startup ordering in Docker Compose using active `redis-cli ping` health probes (`condition: service_healthy`).
+* **Built-In Observability & Chaos Endpoints:**
+  * **Live Telemetry UI (`/`):** Real-time dark-mode dashboard polling container hostnames, global Redis hit state, probe health, and structured JSON logs.
+  * **Prometheus Metrics (`/metrics`):** Exposes HTTP request latencies, status codes, and process telemetry via `prometheus-flask-exporter`.
+  * **Kubernetes-Ready Probes (`/healthz` & `/readyz`):** Liveness check and deep upstream dependency readiness verification.
+  * **Chaos Engineering (`/stress` & `/toggle-fail`):** On-demand CPU saturation and failure injection endpoints for testing autoscaling and self-healing.
 
-Principle of Least Privilege: Stripped root access across all application containers, executing Gunicorn workers strictly under unprivileged UID/GID 10001:10001.
+---
 
-PID 1 Signal Handling: Configured Exec-form entrypoints (CMD ["gunicorn", ...]) to ensure gunicorn runs as PID 1 and handles SIGTERM for graceful shutdowns.
+## 📂 Project Structure
 
-Race-Condition Free Orchestration: Enforced startup ordering in Docker Compose using active redis-cli ping health probes (condition: service_healthy).
+```text
+devops-master-platform/
+├── docker-compose.yml           # 3-tier orchestration, healthchecks, networks & volumes
+├── services/
+│   ├── gateway/
+│   │   ├── Dockerfile           # Hardened multi-stage build (UID 10001)
+│   │   ├── app.py               # Edge routing, probes, Prometheus metrics & CPU stress
+│   │   ├── requirements.txt     # Pinned Python dependencies
+│   │   └── templates/
+│   │       └── index.html       # Tailwind CSS real-time observability dashboard
+│   └── counter/
+│       ├── Dockerfile           # Hardened multi-stage build (UID 10001)
+│       ├── app.py               # Redis state engine, structured JSON & disk audit logger
+│       └── requirements.txt     # Pinned Python dependencies
+└── README.md
+```
 
-Built-In Observability & Chaos Endpoints:
+---
 
-Live Telemetry UI (/): Real-time dark-mode dashboard polling container hostnames, global Redis hit state, probe health, and structured JSON logs.
+## ⚡ Quick Start (Local Docker Compose)
 
-Prometheus Metrics (/metrics): Exposes HTTP request latencies, status codes, and process telemetry via prometheus-flask-exporter.
+### 1. Clone & Launch the Stack
+```bash
+git clone git@github.com:hamza5839/devops-master-platform.git
+cd devops-master-platform
+docker compose up -d --build
+```
 
-Kubernetes-Ready Probes (/healthz & /readyz): Liveness check and deep upstream dependency readiness verification.
+### 2. Verify Services & Health Probes
+```bash
+docker compose ps
+curl -i http://localhost:5000/healthz
+curl -i http://localhost:5000/readyz
+```
 
-Chaos Engineering (/stress & /toggle-fail): On-demand CPU saturation and failure injection endpoints for testing autoscaling and self-healing.
+### 3. Access the Platform
+* **Live Telemetry Dashboard:** `http://localhost:5000`
+* **Gateway Prometheus Metrics:** `http://localhost:5000/metrics`
+* **Counter Prometheus Metrics (Localhost Bound):** `http://localhost:5001/metrics`
+
+---
+
+## 🔖 Release Milestones
+* **`v1.0-phase1-docker`**: Complete 3-tier microservices foundation, hardened multi-stage Dockerfiles, Compose orchestration, and real-time observability UI.

@@ -1,22 +1,23 @@
-# 🚀 DevOps Master Platform — 3-Tier Cloud-Native Microservices
+# 🚀 DevOps Master Platform — 3-Tier Cloud-Native Microservices & DevSecOps CI/CD
 
-An enterprise-grade, observable, and security-hardened 3-tier microservices platform engineered to demonstrate end-to-end DevSecOps practices—from multi-stage container optimization and zero-trust runtime hardening to automated CI/CD pipelines and Kubernetes orchestration.
+An enterprise-grade, observable, and security-hardened 3-tier microservices platform engineered with end-to-end Shift-Left DevSecOps practices—featuring multi-stage container optimization, zero-trust runtime immutability, automated security linting, secret leak detection, and container vulnerability scanning via GitHub Actions.
 
 ---
 
-## 🏗️ System Architecture (Phase 1: Local Foundation)
+## 🏗️ System Architecture & Workflow
 
+### Phase 1: Local Foundation & Runtime Hardening
 ```text
 [ Browser / Client ] 
          │ (HTTP :5000)
          ▼
 ┌─────────────────────────┐
-│     gateway-service     │  (Flask + Gunicorn | UID 10001 | Tailwind Telemetry UI)
+│     gateway-service     │  (Flask + Gunicorn | UID 10001 | Read-Only Root | Tmpfs RAM-Disk)
 └─────────────────────────┘
          │ (Internal Docker DNS: http://counter-service:5001)
          ▼
 ┌─────────────────────────┐
-│     counter-service     │  (Flask + Gunicorn | UID 10001 | JSON Audit Logger)
+│     counter-service     │  (Flask + Gunicorn | UID 10001 | Read-Only Root | Tmpfs RAM-Disk)
 └─────────────────────────┘
          │ (TCP :6379 | Password Authenticated)
          ▼
@@ -25,38 +26,45 @@ An enterprise-grade, observable, and security-hardened 3-tier microservices plat
 └─────────────────────────┘
 ```
 
-### Core Engineering Highlights
-* **Multi-Stage Container Optimization:** Separated build-time compilers (`builder`) from lightweight runtime environments (`runner`) on `python:3.11-slim`, achieving a **97% image efficiency score** verified via `dive`.
-* **OverlayFS Layer Deduplication:** Implemented `COPY --chown=10001:10001` during stage transfers to avoid Copy-on-Write (CoW) metadata duplication across layers.
-* **Principle of Least Privilege:** Stripped root access across all application containers, executing Gunicorn workers strictly under unprivileged UID/GID `10001:10001`.
-* **PID 1 Signal Handling:** Configured Exec-form entrypoints (`CMD ["gunicorn", ...]`) to ensure `gunicorn` runs as PID 1 and handles `SIGTERM` for graceful shutdowns.
-* **Race-Condition Free Orchestration:** Enforced startup ordering in Docker Compose using active `redis-cli ping` health probes (`condition: service_healthy`).
-* **Built-In Observability & Chaos Endpoints:**
-  * **Live Telemetry UI (`/`):** Real-time dark-mode dashboard polling container hostnames, global Redis hit state, probe health, and structured JSON logs.
-  * **Prometheus Metrics (`/metrics`):** Exposes HTTP request latencies, status codes, and process telemetry via `prometheus-flask-exporter`.
-  * **Kubernetes-Ready Probes (`/healthz` & `/readyz`):** Liveness check and deep upstream dependency readiness verification.
-  * **Chaos Engineering (`/stress` & `/toggle-fail`):** On-demand CPU saturation and failure injection endpoints for testing autoscaling and self-healing.
+### Phase 2: Shift-Left DevSecOps CI Pipeline
+```text
+[ Developer Git Push ] ──► [ GitHub Actions CI Trigger ]
+                                 │
+         ┌───────────────────────┼───────────────────────┐
+         ▼                       ▼                       ▼
+  ┌──────────────┐        ┌──────────────┐        ┌──────────────┐
+  │   Gitleaks   │        │   Hadolint   │        │ Trivy Config │
+  │(Secret Scan) │        │(Dockerfile)  │        │(YAML Checks) │
+  └──────────────┘        └──────────────┘        └──────────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 ▼
+                        ┌──────────────┐
+                        │ Docker Build │
+                        │ (BuildKit)   │
+                        └──────────────┘
+                                 ▼
+                        ┌──────────────┐
+                        │  Trivy Scan  │
+                        │ (CVE Check)  │
+                        └──────────────┘
+                                 ▼
+                        [ Pipeline Success ✅ ]
+```
 
 ---
 
-## 📂 Project Structure
+## 🛡️ Core Engineering & Security Highlights
 
-```text
-devops-master-platform/
-├── docker-compose.yml           # 3-tier orchestration, healthchecks, networks & volumes
-├── services/
-│   ├── gateway/
-│   │   ├── Dockerfile           # Hardened multi-stage build (UID 10001)
-│   │   ├── app.py               # Edge routing, probes, Prometheus metrics & CPU stress
-│   │   ├── requirements.txt     # Pinned Python dependencies
-│   │   └── templates/
-│   │       └── index.html       # Tailwind CSS real-time observability dashboard
-│   └── counter/
-│       ├── Dockerfile           # Hardened multi-stage build (UID 10001)
-│       ├── app.py               # Redis state engine, structured JSON & disk audit logger
-│       └── requirements.txt     # Pinned Python dependencies
-└── README.md
-```
+* **Multi-Stage Container Optimization:** Separated build-time compilers (`builder`) from lightweight runtime environments (`runner`) on `python:3.11-slim`, achieving a **97% image efficiency score** verified via `dive`.
+* **OverlayFS Layer Deduplication:** Implemented `COPY --chown=10001:10001` during stage transfers to avoid Copy-on-Write (CoW) metadata duplication across layers.
+* **Zero-Trust Runtime Hardening:** Enforced `read_only: true` root filesystems and `cap_drop: [ALL]` kernel capability stripping across all application containers, paired with in-memory `tmpfs` RAM-disks at `/`tmp`.
+* **Automated Shift-Left Security (CI/CD):** Integrated Gitleaks (secret detection), Hadolint (Dockerfile linting), and Trivy (container vulnerability scanning) into a fully automated GitHub Actions pipeline.
+* **Built-In Observability & Chaos Endpoints:**
+  * **Live Telemetry UI (`/`):** Real-time dark-mode dashboard polling container hostnames, global Redis hit state, probe health, and structured JSON logs.
+  * **Prometheus Metrics (`/metrics`):** Exposes HTTP request latencies and process telemetry.
+  * **Kubernetes-Ready Probes (`/healthz` & `/readyz`):** Liveness check and deep upstream dependency verification.
+  * **Chaos Engineering (`/stress` & `/toggle-fail`):** On-demand CPU saturation and failure injection for testing resilience.
 
 ---
 
@@ -85,3 +93,4 @@ curl -i http://localhost:5000/readyz
 
 ## 🔖 Release Milestones
 * **`v1.0-phase1-docker`**: Complete 3-tier microservices foundation, hardened multi-stage Dockerfiles, Compose orchestration, and real-time observability UI.
+* **`v2.0-phase2-cicd`**: Automated DevSecOps GitHub Actions pipeline featuring Gitleaks secret detection, Hadolint static linting, and Trivy container vulnerability scanning.

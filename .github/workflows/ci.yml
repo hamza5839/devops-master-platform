@@ -14,20 +14,20 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Required for Gitleaks to scan full commit history
+          fetch-depth: 0
 
       - name: Run Gitleaks Secret Scanner
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run Hadolint Dockerfile Linter
-        uses: jessestuart/hadolint-action@v1
+      - name: Run Hadolint Dockerfile Linter (Gateway)
+        uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: ./services/gateway/Dockerfile
 
-      - name: Run Hadolint on Counter Dockerfile
-        uses: jessestuart/hadolint-action@v1
+      - name: Run Hadolint Dockerfile Linter (Counter)
+        uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: ./services/counter/Dockerfile
 
@@ -63,7 +63,7 @@ jobs:
         with:
           image-ref: 'gateway-service:latest'
           format: 'table'
-          exit-code: '0'       # Set to '1' to block pipeline on high CVEs
+          exit-code: '0'
           ignore-unfixed: true
           severity: 'CRITICAL,HIGH'
 

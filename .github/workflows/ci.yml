@@ -59,7 +59,7 @@ jobs:
           tags: counter-service:latest
 
       - name: Run Trivy Vulnerability Scanner (Gateway)
-        uses: aquasecurity/trivy-action@0.18.0
+        uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'gateway-service:latest'
           format: 'table'
@@ -68,7 +68,7 @@ jobs:
           severity: 'CRITICAL,HIGH'
 
       - name: Run Trivy Vulnerability Scanner (Counter)
-        uses: aquasecurity/trivy-action@0.18.0
+        uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'counter-service:latest'
           format: 'table'

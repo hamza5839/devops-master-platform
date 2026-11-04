@@ -32,12 +32,20 @@ jobs:
           dockerfile: ./services/counter/Dockerfile
 
   build-and-scan:
-    name: Build & Trivy Vulnerability Scan
+    name: Build, Trivy Scan & Push to GHCR
     needs: security-and-lint
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Set Lowercase Repo Owner and Short SHA
+        run: |
+          echo "REPO_OWNER=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          echo "SHORT_SHA=$(git rev-parse --short=7 HEAD)" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -48,7 +56,11 @@ jobs:
           context: ./services/gateway
           file: ./services/gateway/Dockerfile
           load: true
-          tags: gateway-service:latest
+          tags: |
+            ghcr.io/${{ env.REPO_OWNER }}/gateway-service:sha-${{ env.SHORT_SHA }}
+            ghcr.io/${{ env.REPO_OWNER }}/gateway-service:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Build Counter Docker Image
         uses: docker/build-push-action@v5
@@ -56,12 +68,16 @@ jobs:
           context: ./services/counter
           file: ./services/counter/Dockerfile
           load: true
-          tags: counter-service:latest
+          tags: |
+            ghcr.io/${{ env.REPO_OWNER }}/counter-service:sha-${{ env.SHORT_SHA }}
+            ghcr.io/${{ env.REPO_OWNER }}/counter-service:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Run Trivy Vulnerability Scanner (Gateway)
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'gateway-service:latest'
+          image-ref: 'ghcr.io/${{ env.REPO_OWNER }}/gateway-service:sha-${{ env.SHORT_SHA }}'
           format: 'table'
           exit-code: '0'
           ignore-unfixed: true
@@ -70,8 +86,24 @@ jobs:
       - name: Run Trivy Vulnerability Scanner (Counter)
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'counter-service:latest'
+          image-ref: 'ghcr.io/${{ env.REPO_OWNER }}/counter-service:sha-${{ env.SHORT_SHA }}'
           format: 'table'
           exit-code: '0'
           ignore-unfixed: true
           severity: 'CRITICAL,HIGH'
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push Verified Images to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          docker push ghcr.io/${{ env.REPO_OWNER }}/gateway-service:sha-${{ env.SHORT_SHA }}
+          docker push ghcr.io/${{ env.REPO_OWNER }}/gateway-service:latest
+          docker push ghcr.io/${{ env.REPO_OWNER }}/counter-service:sha-${{ env.SHORT_SHA }}
+          docker push ghcr.io/${{ env.REPO_OWNER }}/counter-service:latest

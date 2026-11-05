@@ -94,3 +94,23 @@ curl -i http://localhost:5000/readyz
 ## 🔖 Release Milestones
 * **`v1.0-phase1-docker`**: Complete 3-tier microservices foundation, hardened multi-stage Dockerfiles, Compose orchestration, and real-time observability UI.
 * **`v2.0-phase2-cicd`**: Automated DevSecOps GitHub Actions pipeline featuring Gitleaks secret detection, Hadolint static linting, and Trivy container vulnerability scanning.
+
+---
+
+## Phase 3: Kubernetes Orchestration, Pod Security & Zero-Trust Networking
+
+### 1. Multi-Node Cluster & CNI Architecture (`k8s/kind-config.yaml`)
+- **Topology:** 3-node Kind cluster (`1` Control Plane + `2` Worker Nodes) running Kubernetes `v1.32.2`.
+- **CNI Plugin:** Disabled default `kindnet` (`disableDefaultCNI: true`) and deployed **Calico CNI (`v3.29.2`)** over custom Pod CIDR `192.168.0.0/16` to enforce Layer 3/4 NetworkPolicies.
+- **Host Port Mapping:** Exposed Worker NodePort `30080` directly to host port `5000`.
+
+### 2. Namespace Security & Configuration (`k8s/00-namespace-config.yaml`)
+- **Pod Security Admission (PSA):** Enforced `pod-security.kubernetes.io/enforce: restricted` across the `devops-platform` namespace.
+- **Decoupled Config & Secrets:** Externalized environment parameters into `platform-config` (`ConfigMap`) and database credentials into `redis-secret` (`Secret`).
+
+### 3. Stateful & Stateless Workloads (`01-redis.yaml`, `02-counter.yaml`, `03-gateway.yaml`)
+- **Database Tier (`StatefulSet`):** Deployed `redis-0` backed by a Headless Service (`clusterIP: None`) and a `1Gi` `PersistentVolumeClaim` (`local-path-storage`) with `--appendonly yes` AOF persistence.
+- **Backend & Frontend Tiers (`Deployment`):** Deployed 2 replicas each of `counter-service` (`ClusterIP:5001`) and `gateway-service` (`NodePort:30080`), running as non-root UID `10001` (`999` for Redis), `readOnlyRootFilesystem: true`, `RuntimeDefault` seccomp profiles, dropped Linux capabilities (`ALL`), and in-memory `emptyDir` `/tmp` mounts.
+
+### 4. Zero-Trust Microsegmentation (`k8s/04-network-policy.yaml`)
+- **Default Deny & Least Privilege:** Enforced Calico `NetworkPolicy` rules isolating `redis` so it only accepts TCP `6379` traffic from `counter-service`, and `counter-service` only accepts TCP `5001` traffic from `gateway-service`.

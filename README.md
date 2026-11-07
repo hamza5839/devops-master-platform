@@ -114,3 +114,24 @@ curl -i http://localhost:5000/readyz
 
 ### 4. Zero-Trust Microsegmentation (`k8s/04-network-policy.yaml`)
 - **Default Deny & Least Privilege:** Enforced Calico `NetworkPolicy` rules isolating `redis` so it only accepts TCP `6379` traffic from `counter-service`, and `counter-service` only accepts TCP `5001` traffic from `gateway-service`.
+
+## Phase 4: Helm Packaging & Multi-Environment Configuration
+
+### 1. Chart Architecture & Blueprint Parameterization ()
+- **Templating Engine:** Converted static manifests into a dynamic Helm chart structure (, , , and ) utilizing  variable injection.
+- **Multi-Environment Strategy:** Maintained a single DRY chart codebase supporting side-by-side isolated deployments across  (,  replica, NodePort ) and  (,  replicas, NodePort ).
+
+### 2. Zero-Trust NetworkPolicy & Release Management
+- **Calico Microsegmentation Templates:** Parameterized all 7 core zero-trust Calico  blueprints () for dynamic namespace binding.
+- **Lifecycle Commands:** Utilized ==> Linting .
+Error unable to check Chart.yaml file in chart: stat Chart.yaml: no such file or directory,  dry-runs, , and  for seamless revision tracking and zero-downtime policy updates.
+
+## Phase 4: Helm Packaging & Multi-Environment Configuration
+
+### 1. Chart Architecture & Blueprint Parameterization (`charts/devops-platform/`)
+- **Templating Engine:** Converted static manifests into a dynamic Helm chart structure (`Chart.yaml`, `values.yaml`, `values-prod.yaml`, and `templates/`) utilizing `{{ .Values... }}` variable injection.
+- **Multi-Environment Strategy:** Maintained a single DRY chart codebase supporting side-by-side isolated deployments across `dev` (`devops-dev`, `1` replica, NodePort `30081`) and `prod` (`devops-platform`, `2` replicas, NodePort `30080`).
+
+### 2. Zero-Trust NetworkPolicy & Release Management
+- **Calico Microsegmentation Templates:** Parameterized all 7 core zero-trust Calico `NetworkPolicy` blueprints (`04-network-policy.yaml`) for dynamic namespace binding.
+- **Lifecycle Commands:** Utilized `helm lint`, `helm template` dry-runs, `helm install --create-namespace`, and `helm upgrade` for seamless revision tracking and zero-downtime policy updates.

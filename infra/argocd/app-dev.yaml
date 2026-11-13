@@ -1,22 +1,21 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: prod-stack
+  name: dev-stack
   namespace: argocd
 spec:
   project: default
   source:
     repoURL: https://github.com/hamza5839/devops-master-platform.git
     targetRevision: main
-    path: charts/devops-platform
+    path: infra/helm/devops-platform
     helm:
-      releaseName: prod-stack
+      releaseName: dev-stack
       valueFiles:
         - values.yaml
-        - values-prod.yaml
   destination:
     server: https://kubernetes.default.svc
-    namespace: devops-platform
+    namespace: devops-dev
   syncPolicy:
     automated:
       prune: true

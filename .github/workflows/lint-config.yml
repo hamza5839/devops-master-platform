@@ -6,10 +6,7 @@ on:
       - main
     # ONLY trigger this when infrastructure files change
     paths:
-      - 'charts/**'
-      - 'k8s/**'
-      - 'argocd/**'
-
+      - 'infra/**'
 jobs:
   audit-helm:
     name: Helm Lint
@@ -20,4 +17,4 @@ jobs:
 
       - name: Run Helm Lint
         # This scans your chart and values files for syntax errors
-        run: helm lint charts/devops-platform/
+        run: helm lint infra/helm/devops-platform/

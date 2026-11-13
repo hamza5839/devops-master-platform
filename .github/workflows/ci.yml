@@ -27,12 +27,12 @@ jobs:
       - name: Run Hadolint Dockerfile Linter (Gateway)
         uses: hadolint/hadolint-action@v3.1.0
         with:
-          dockerfile: ./services/gateway/Dockerfile
+          dockerfile: ./src/gateway/Dockerfile
 
       - name: Run Hadolint Dockerfile Linter (Counter)
         uses: hadolint/hadolint-action@v3.1.0
         with:
-          dockerfile: ./services/counter/Dockerfile
+          dockerfile: ./src/counter/Dockerfile
 
   build-and-scan:
     name: Build, Trivy Scan & Push to GHCR

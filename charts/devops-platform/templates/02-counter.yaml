@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: counter-service
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: counter-service
+spec:
+  selector:
+    app: counter-service
+  ports:
+    - protocol: TCP
+      port: {{ .Values.counter.port }}
+      targetPort: {{ .Values.counter.port }}
+      name: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: counter-deployment
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.counter.replicas }}
+  selector:
+    matchLabels:
+      app: counter-service
+  template:
+    metadata:
+      labels:
+        app: counter-service
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: counter-service
+          image: "{{ .Values.counter.image }}"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: {{ .Values.counter.port }}
+          envFrom:
+            - configMapRef:
+                name: platform-config
+            - secretRef:
+                name: redis-secret
+          resources:
+            requests:
+              cpu: "{{ .Values.counter.resources.requests.cpu }}"
+              memory: "{{ .Values.counter.resources.requests.memory }}"
+            limits:
+              cpu: "{{ .Values.counter.resources.limits.cpu }}"
+              memory: "{{ .Values.counter.resources.limits.memory }}"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}

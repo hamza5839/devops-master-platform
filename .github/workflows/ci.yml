@@ -3,6 +3,11 @@ name: DevSecOps CI Pipeline
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'charts/**'
+      - 'k8s/**'
+      - 'argocd/**'
+      - 'README.md'
   pull_request:
     branches: [ "main" ]
 

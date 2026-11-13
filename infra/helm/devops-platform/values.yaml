@@ -1,3 +1,19 @@
+namespace: devops-dev
+environment: development
+
+redis:
+  image: redis:7.2-alpine
+  port: 6379
+  password: "DevSecretPassword123!"
+  storage: 1Gi
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "150m"
+      memory: "128Mi"
+
 counter:
   image:
     repository: ghcr.io/hamza5839/counter-service
@@ -26,7 +42,3 @@ gateway:
     limits:
       cpu: "150m"
       memory: "128Mi"
-redis:
-  image: "redis:7.2-alpine"
-  port: 6379
-  storage: "1Gi"

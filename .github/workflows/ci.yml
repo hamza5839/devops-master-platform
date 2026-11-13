@@ -56,8 +56,8 @@ jobs:
       - name: Build Gateway Docker Image
         uses: docker/build-push-action@v5
         with:
-          context: ./services/gateway
-          file: ./services/gateway/Dockerfile
+          context: ./src/gateway
+          file: ./src/gateway/Dockerfile
           load: true
           tags: |
             ghcr.io/${{ env.REPO_OWNER }}/gateway-service:sha-${{ env.SHORT_SHA }}
@@ -68,8 +68,8 @@ jobs:
       - name: Build Counter Docker Image
         uses: docker/build-push-action@v5
         with:
-          context: ./services/counter
-          file: ./services/counter/Dockerfile
+          context: ./src/counter
+          file: ./src/counter/Dockerfile
           load: true
           tags: |
             ghcr.io/${{ env.REPO_OWNER }}/counter-service:sha-${{ env.SHORT_SHA }}

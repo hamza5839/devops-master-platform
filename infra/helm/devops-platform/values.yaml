@@ -15,7 +15,9 @@ redis:
       memory: "128Mi"
 
 counter:
-  image: ghcr.io/hamza5839/counter-service:latest
+  image:
+    ghcr.io/hamza5839/counter-service:latest
+    tag: ""
   port: 5001
   replicas: 1
   resources:
@@ -27,7 +29,9 @@ counter:
       memory: "128Mi"
 
 gateway:
-  image: ghcr.io/hamza5839/gateway-service:latest
+  image:
+    ghcr.io/hamza5839/gateway-service:latest
+    tag: ""
   port: 5000
   nodePort: 30081
   replicas: 1

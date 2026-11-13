@@ -1,0 +1,23 @@
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+metadata:
+  name: prod-stack-updater
+  namespace: argocd
+spec:
+  applicationRefs:
+    - namePattern: "prod-stack"
+  writeBackConfig:
+    method: "git:secret:argocd/git-creds"
+    gitConfig:
+      branch: "main"
+  images:
+    - alias: "counter"
+      imageName: "ghcr.io/hamza5839/counter-service"
+      commonUpdateSettings:
+        updateStrategy: "newest-build"
+        allowTags: "regexp:^sha-[a-z0-9]+$"
+    - alias: "gateway"
+      imageName: "ghcr.io/hamza5839/gateway-service"
+      commonUpdateSettings:
+        updateStrategy: "newest-build"
+        allowTags: "regexp:^sha-[a-z0-9]+$"

@@ -16,7 +16,7 @@ redis:
 
 counter:
   image:
-    ghcr.io/hamza5839/counter-service:latest
+    repository: ghcr.io/hamza5839/counter-service:latest
     tag: ""
   port: 5001
   replicas: 1
@@ -30,7 +30,7 @@ counter:
 
 gateway:
   image:
-    ghcr.io/hamza5839/gateway-service:latest
+    repository: ghcr.io/hamza5839/gateway-service:latest
     tag: ""
   port: 5000
   nodePort: 30081
@@ -42,4 +42,3 @@ gateway:
     limits:
       cpu: "150m"
       memory: "128Mi"
-      #DUMMY 

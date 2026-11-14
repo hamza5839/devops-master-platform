@@ -4,11 +4,11 @@ helm:
     value: ghcr.io/hamza5839/counter-service
     forcestring: true
   - name: counter.image.tag
-    value: sha-508d933
+    value: sha-4e9094d
     forcestring: true
   - name: gateway.image.repository
     value: ghcr.io/hamza5839/gateway-service
     forcestring: true
   - name: gateway.image.tag
-    value: sha-508d933
+    value: sha-98c9a39
     forcestring: true

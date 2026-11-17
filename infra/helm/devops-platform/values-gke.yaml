@@ -1,0 +1,56 @@
+global:
+  environment: gke
+  imagePullSecrets:
+    - name: ghcr-pull-secret
+
+gatewayService:
+  image:
+    repository: ghcr.io/hamza5839/gateway-service
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+
+counterService:
+  image:
+    repository: ghcr.io/hamza5839/counter-service
+    pullPolicy: IfNotPresent
+
+ingress:
+  enabled: true
+  className: gce
+  hosts:
+    - host: platform.hamzatechlab.online
+      paths:
+        - path: /
+          pathType: Prefix
+
+networkPolicy:
+  enabled: true
+
+argocdImageUpdater:
+  enabled: true
+  config:
+    registries:
+      - name: GitHub Container Registry
+        api_url: https://ghcr.io
+        prefix: ghcr.io
+        credentials: pullsecret:argocd/ghcr-pull-secret
+        default: true
+
+kube-prometheus-stack:
+  prometheus:
+    prometheusSpec:
+      retention: 7d
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            storageClassName: standard-rwo
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 10Gi
+  grafana:
+    persistence:
+      enabled: true
+      storageClassName: standard-rwo
+      size: 2Gi

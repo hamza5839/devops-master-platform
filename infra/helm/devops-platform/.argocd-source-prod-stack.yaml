@@ -10,5 +10,5 @@ helm:
     value: ghcr.io/hamza5839/gateway-service
     forcestring: true
   - name: gateway.image.tag
-    value: sha-508d933
+    value: sha-b7761a7
     forcestring: true

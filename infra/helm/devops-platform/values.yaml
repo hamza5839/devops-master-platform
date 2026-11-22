@@ -38,7 +38,7 @@ gateway:
   resources:
     requests:
       cpu: "30m"
-      memory: "64Mi"
+      memory: "16Mi"
     limits:
       cpu: "150m"
       memory: "128Mi"

@@ -14,7 +14,7 @@ spec:
   source:
     repoURL: https://github.com/hamza5839/devops-master-platform.git
     targetRevision: main
-    path: infra/helm/devops-platform
+    path: path: infra/helm/devops-platform
     helm:
       releaseName: prod-stack
       valueFiles:

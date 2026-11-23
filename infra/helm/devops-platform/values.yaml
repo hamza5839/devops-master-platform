@@ -34,7 +34,7 @@ gateway:
     tag: "latest"
   port: 5000
   nodePort: 30081
-  replicas: 2
+  replicas: 1
   resources:
     requests:
       cpu: "30m"

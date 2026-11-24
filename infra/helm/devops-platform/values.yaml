@@ -31,7 +31,7 @@ counter:
 gateway:
   image:
     repository: ghcr.io/hamza5839/gateway-service
-    tag: "latest"
+    tag: "v999-broken"
   port: 5000
   nodePort: 30081
   replicas: 1

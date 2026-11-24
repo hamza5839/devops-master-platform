@@ -4,7 +4,7 @@ metadata:
   name: dev-stack
   namespace: argocd
 spec:
-  project: default
+  project: dev-project
   source:
     repoURL: https://github.com/hamza5839/devops-master-platform.git
     targetRevision: main
